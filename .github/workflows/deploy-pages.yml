@@ -1,0 +1,74 @@
+name: Deploy GitHub Pages (produção + homologação)
+
+# main    -> smedigital.com.br/ppp/        (produção)
+# develop -> smedigital.com.br/ppp/teste/  (homologação)
+#
+# Um push em QUALQUER das duas republica as duas árvores: o Pages publica um
+# artefato só por repositório.
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:   # permite rodar manualmente pela aba Actions
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Os scripts de montagem vêm do commit que disparou o deploy — assim uma
+      # branch que ainda não os tem (a main, no começo) não derruba a outra.
+      - name: Baixar os scripts de montagem
+        uses: actions/checkout@v4
+        with:
+          path: _ci
+
+      - name: Baixar main (produção)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _src/main
+
+      - name: Baixar develop (homologação)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: develop
+          path: _src/develop
+
+      - name: Montar e conferir o site (só página e o que a página carrega)
+        run: |
+          set -euo pipefail
+          bash _ci/.github/montar-site.sh _src/main _site
+          python3 _ci/.github/conferir-referencias.py _site _src/main
+          # O checkout CRIA a pasta antes de falhar quando a branch não existe:
+          # o que vale é a pasta ter conteúdo.
+          if [ -n "$(ls -A _src/develop 2>/dev/null | grep -v '^\.git$')" ]; then
+            bash _ci/.github/montar-site.sh _src/develop _site/teste
+            python3 _ci/.github/conferir-referencias.py _site/teste _src/develop
+          fi
+          touch _site/.nojekyll
+
+      - name: Enviar artefato do Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

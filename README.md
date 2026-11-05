@@ -16,13 +16,24 @@ Arquivo único por opção: é uma página só, provisória, e evita qualquer pr
 caminho relativo ao servir de subpasta. Se o site crescer, separar em
 `assets/css/style.css` e `assets/js/main.js`.
 
-## Publicação em subpasta
+## Publicação (GitHub Pages)
 
-Destino previsto: `https://smedigital.com.br/ppp-educacao-infantil/`
+| Branch | Vai para |
+|---|---|
+| `main` | `https://smedigital.com.br/ppp/` (produção) |
+| `develop` | `https://smedigital.com.br/ppp/teste/` (homologação) |
 
-1. Criar a pasta `ppp-educacao-infantil/` na raiz do repositório do site.
-2. Copiar o `index.html` para dentro dela.
-3. Commit e push — o Cloudflare Pages publica automaticamente.
+O workflow `.github/workflows/deploy-pages.yml` roda a cada push nas duas branches
+(ou manualmente, pela aba Actions) e republica as duas árvores.
+
+A montagem é por **inclusão** (`.github/montar-site.sh`): só vai ao ar página e o que
+a página carrega (HTML, CSS, JS, imagens, fontes, PDF). `README.md`, `PENDENCIAS.md`,
+`CLAUDE.md` e os scripts não são publicados. Imagem nova em `assets/img/` precisa
+que a pasta `assets` entre em `DIRS_RUNTIME`, no próprio `montar-site.sh` — a
+conferência (`conferir-referencias.py`) para o deploy se a página pedir um arquivo
+que ficou de fora.
+
+Fluxo: alterar na `develop`, conferir em `/ppp/teste/`, e só então levar para a `main`.
 
 Todos os links internos são âncoras (`#secao`) e não há caminho absoluto no arquivo,
 então o site funciona em qualquer subpasta sem ajuste.

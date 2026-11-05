@@ -17,8 +17,12 @@ Arquivos: `index.html` (site completo em arquivo único), `PENDENCIAS.md`
 (placeholders e afirmações a validar) e `README.md` (estrutura, edição e
 publicação). Leia os três antes de qualquer alteração.
 
-**Destino previsto:** subpasta provisória do site da SME. O endereço e a forma
-de publicação ainda estão em aberto — ver `README.md`.
+**Publicação:** GitHub Pages, por `.github/workflows/deploy-pages.yml`.
+`main` vai para `smedigital.com.br/ppp/` (produção) e `develop` para
+`smedigital.com.br/ppp/teste/` (homologação). Trabalhe na `develop`; a `main`
+só recebe o que foi conferido no `/teste/`. A montagem é por inclusão
+(`.github/montar-site.sh`): documentação e scripts não vão ao ar — não
+"destrave" o deploy acrescentando extensão ou pasta sem necessidade.
 
 ## Natureza do site
 
