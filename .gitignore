@@ -1,0 +1,19 @@
+# Arquivos de dados nunca entram no repositório: o site é público e o
+# histórico do Git é permanente.
+*.sql
+*.csv
+*.tsv
+*.dump
+*.sqlite
+*.parquet
+*.xls
+*.xlsx
+*.xlsm
+
+# Rascunhos e documentos de trabalho
+dados/
+rascunhos/
+
+# Sistema
+.DS_Store
+Thumbs.db
