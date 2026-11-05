@@ -26,7 +26,7 @@ DESTINO="${2:?uso: montar-site.sh <origem> <destino>}"
 
 # Pastas de RUNTIME deste repositório: as que guardam o que as páginas
 # carregam. A raiz sempre entra. O que não estiver aqui fica de fora.
-DIRS_RUNTIME=()
+DIRS_RUNTIME=(documentos)
 
 # O que conta como "página e o que a página carrega".
 EXTENSOES=( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.mjs'

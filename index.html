@@ -12,20 +12,43 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,500;0,700;1,500&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<script>
+/* Restaura antes do primeiro desenho as escolhas da barra de acessibilidade,
+   para a página não piscar no tamanho ou no contraste errado. */
+(function () {
+  try {
+    var r = document.documentElement;
+    var f = parseInt(localStorage.getItem('ppp_fonte'), 10);
+    if (f > 0 && f < 4) { r.style.fontSize = [100, 112.5, 125, 137.5][f] + '%'; }
+    if (localStorage.getItem('ppp_contraste') === '1') { r.setAttribute('data-contraste', 'alto'); }
+  } catch (e) {}
+})();
+</script>
 <style>
-/* Layout: faixa superior de aviso, cabeçalho fixo, seções em bandas alternadas de largura total
-   com wrapper interno de 68rem; conteúdo corrido em coluna única no celular. */
+/* Layout: barra de acessibilidade, faixa de aviso, cabeçalho fixo, seções em bandas
+   alternadas de largura total com wrapper interno de 68rem; coluna única no celular.
+   Toda cor está em variável: tema claro, tema escuro e alto contraste. */
 :root{
   --azul:#123b66;
   --azul-escuro:#0c2a4a;
   --verde:#1a6f64;
   --ocre:#c8851d;
+  --ocre-hover:#d8973a;
+  --ocre-texto:#7a4f0c;   /* ocre escurecido: texto pequeno sobre fundo claro */
+  --verde-texto:#13574f;  /* idem, verde */
+  --azul-texto:#123b66;   /* idem, azul */
+  --sobre-ocre:#1f1403;   /* texto sobre fundo ocre */
+  --sobre-azul:#ffffff;   /* texto sobre fundo --azul */
   --papel:#f7f8fa;
   --papel-2:#eef1f5;
   --superficie:#ffffff;
   --tinta:#15202b;
   --tinta-suave:#4a5a6a;
   --linha:#d4dce6;
+  /* faixas escuras: cabeçalho, abertura e rodapé (fundo --azul-escuro nos dois temas) */
+  --banda-texto:#ffffff;
+  --banda-suave:#d6e4f2;
+  --banda-apagado:#9dc0e4;
   --display:"Bitter",Georgia,"Times New Roman",serif;
   --texto:"Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif;
   --gutter:max(16px,env(safe-area-inset-left,0px));
@@ -37,6 +60,11 @@
     --azul-escuro:#0a1725;
     --verde:#6cc6b7;
     --ocre:#e8ab45;
+    --ocre-hover:#f0bc63;
+    --ocre-texto:#e8ab45;
+    --verde-texto:#6cc6b7;
+    --azul-texto:#8fbbe8;
+    --sobre-azul:#0a1725;
     --papel:#0f1821;
     --papel-2:#16222e;
     --superficie:#1a2734;
@@ -51,6 +79,11 @@
   --azul-escuro:#0a1725;
   --verde:#6cc6b7;
   --ocre:#e8ab45;
+  --ocre-hover:#f0bc63;
+  --ocre-texto:#e8ab45;
+  --verde-texto:#6cc6b7;
+  --azul-texto:#8fbbe8;
+  --sobre-azul:#0a1725;
   --papel:#0f1821;
   --papel-2:#16222e;
   --superficie:#1a2734;
@@ -59,8 +92,37 @@
   --linha:#2c3d4d;
   color-scheme:dark;
 }
+/* Alto contraste (botão da barra de acessibilidade): fundo preto, texto branco,
+   destaques em amarelo. Vem depois dos temas para vencer os dois. */
+:root[data-contraste="alto"]{
+  --azul:#ffe14d;
+  --azul-escuro:#000000;
+  --verde:#7dffb0;
+  --ocre:#ffe14d;
+  --ocre-hover:#fff09a;
+  --ocre-texto:#ffe14d;
+  --verde-texto:#7dffb0;
+  --azul-texto:#ffe14d;
+  --sobre-ocre:#000000;
+  --sobre-azul:#000000;
+  --papel:#000000;
+  --papel-2:#000000;
+  --superficie:#000000;
+  --tinta:#ffffff;
+  --tinta-suave:#ffffff;
+  --linha:#ffffff;
+  --banda-texto:#ffffff;
+  --banda-suave:#ffffff;
+  --banda-apagado:#ffe14d;
+  color-scheme:dark;
+}
 
 *,*::before,*::after{box-sizing:border-box}
+/* Regra de autor com display (ex.: .resposta{display:grid}) anula o [hidden] do navegador:
+   sem esta linha as respostas do FAQ ficavam sempre abertas. */
+[hidden]{display:none !important}
+html{scroll-padding-top:5.5rem}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 body{
   margin:0;
   background:var(--papel);
@@ -69,64 +131,88 @@ body{
   font-size:1.0625rem;
   line-height:1.65;
   -webkit-text-size-adjust:100%;
+  overflow-wrap:break-word;
 }
-h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.2;margin:0}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.2;margin:0}
 p{margin:0}
 a{color:var(--azul)}
-ul{margin:0}
+ul,ol{margin:0}
 img{max-width:100%}
+button{font:inherit}
 
 .skip{
   position:absolute;left:-9999px;top:0;z-index:60;
-  background:var(--azul);color:#fff;padding:.75rem 1rem;border-radius:0 0 6px 0;
+  background:var(--azul);color:var(--sobre-azul);padding:.75rem 1rem;border-radius:0 0 6px 0;
 }
 .skip:focus{left:0}
 :focus-visible{outline:3px solid var(--ocre);outline-offset:2px}
 
-.faixa-inner,.topo-inner,.banda-inner{
+.acess-inner,.faixa-inner,.topo-inner,.banda-inner{
   width:100%;max-width:68rem;margin-inline:auto;
   padding-left:var(--gutter);padding-right:var(--gutter-dir);
 }
 
+/* barra de acessibilidade */
+.acess{background:var(--azul-escuro);color:var(--banda-suave);font-size:.875rem;border-bottom:1px solid color-mix(in srgb,var(--banda-texto) 14%,transparent)}
+.acess-inner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.25rem 1rem;padding-block:.3rem}
+.acess-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.25rem}
+.acess-rot{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;margin-right:.25rem}
+.acess button{
+  background:none;color:var(--banda-texto);border:1px solid color-mix(in srgb,var(--banda-texto) 30%,transparent);
+  border-radius:4px;padding:.15rem .55rem;min-height:2rem;cursor:pointer;font-size:.875rem;line-height:1.2;
+}
+.acess button:hover{background:color-mix(in srgb,var(--banda-texto) 12%,transparent)}
+.acess button[aria-pressed="true"]{background:var(--ocre);color:var(--sobre-ocre);border-color:var(--ocre)}
+.acess button:disabled{opacity:.45;cursor:default}
+
 /* aviso provisório */
-.faixa{background:var(--ocre);color:#1f1403}
-.faixa-inner{padding-block:.5rem;font-size:.9375rem;font-weight:600;display:flex;gap:.5rem;align-items:baseline}
+.faixa{background:var(--ocre);color:var(--sobre-ocre)}
+.faixa-inner{padding-block:.5rem;font-size:.9375rem;font-weight:600;display:flex;flex-wrap:wrap;gap:.1rem .5rem;align-items:baseline}
 .faixa-inner span:first-child{text-transform:uppercase;letter-spacing:.08em;font-size:.75rem;white-space:nowrap}
 
 /* cabeçalho */
 .topo{
   position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
   background:var(--azul-escuro);
-  border-bottom:1px solid rgba(255,255,255,.14);
+  border-bottom:1px solid color-mix(in srgb,var(--banda-texto) 14%,transparent);
 }
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--ocre)}
 .topo-inner{
-  padding-block:.75rem;display:flex;flex-wrap:wrap;gap:.75rem 1.5rem;align-items:center;justify-content:space-between;
+  padding-block:.75rem;display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;align-items:center;justify-content:space-between;
 }
-.marca{display:flex;flex-direction:column;line-height:1.25;color:#fff;text-decoration:none;min-width:0}
+.marca{display:flex;flex-direction:column;line-height:1.25;color:var(--banda-texto);text-decoration:none;min-width:0}
 .marca b{font-family:var(--display);font-size:1.0625rem;font-weight:700}
-.marca small{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:#b9cde3}
+.marca small{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--banda-suave)}
 .menu{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem;list-style:none;padding:0;margin:0;font-size:.9375rem}
-.menu a{color:#dce7f3;text-decoration:none;border-bottom:2px solid transparent;padding-block:.15rem}
-.menu a:hover{border-bottom-color:var(--ocre);color:#fff}
+.menu a{color:var(--banda-suave);text-decoration:none;border-bottom:2px solid transparent;padding-block:.15rem;white-space:nowrap}
+.menu a:hover{border-bottom-color:var(--ocre);color:var(--banda-texto)}
+/* No celular o menu fica numa linha só e rola para o lado DENTRO dele: assim o
+   cabeçalho fixo não ocupa três linhas da tela. A página não rola para o lado. */
+@media (max-width:47.99rem){
+  html{scroll-padding-top:8rem}  /* o cabeçalho fixo tem duas linhas no celular */
+  .topo-inner{padding-block:.5rem}
+  .topo nav{width:100%;min-width:0}
+  .menu{flex-wrap:nowrap;overflow-x:auto;gap:1rem;padding-bottom:.35rem;scrollbar-width:thin}
+}
 
-/* hero */
-.hero{background:var(--azul-escuro);color:#fff;position:relative;overflow:hidden}
+/* abertura */
+.hero{background:var(--azul-escuro);color:var(--banda-texto);position:relative;overflow:hidden}
 .hero::after{
   content:"";position:absolute;inset:auto 0 0 0;height:6px;
-  background:linear-gradient(90deg,var(--ocre) 0 33%,#fff 33% 66%,var(--verde) 66% 100%);
+  background:linear-gradient(90deg,var(--ocre) 0 33%,var(--banda-texto) 33% 66%,var(--verde) 66% 100%);
 }
 .hero .banda-inner{padding-block:3rem 3.75rem;display:grid;gap:1.25rem;max-width:56rem;margin-inline:auto}
 .eyebrow{
-  font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#9dc0e4;
+  font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--banda-apagado);
   margin:0;
 }
-.hero h1{font-size:clamp(2rem,6vw,3.25rem);color:#fff}
-.hero .lead{font-size:clamp(1.0625rem,2.4vw,1.3125rem);color:#d6e4f2;max-width:36em}
+.hero h1{font-size:clamp(2rem,6vw,3.25rem);color:var(--banda-texto)}
+.hero .lead{font-size:clamp(1.0625rem,2.4vw,1.3125rem);color:var(--banda-suave);max-width:36em}
 .selo{
-  display:inline-flex;align-items:center;gap:.5rem;align-self:start;
-  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);
-  padding:.4rem .75rem;border-radius:999px;font-size:.875rem;color:#fff;
+  display:inline-flex;flex-wrap:wrap;align-items:center;gap:.5rem;align-self:start;
+  background:color-mix(in srgb,var(--banda-texto) 10%,transparent);
+  border:1px solid color-mix(in srgb,var(--banda-texto) 28%,transparent);
+  padding:.4rem .75rem;border-radius:999px;font-size:.875rem;color:var(--banda-texto);
 }
 .selo .ponto{width:.5rem;height:.5rem;border-radius:50%;background:var(--ocre);flex:none}
 .acoes{display:flex;flex-wrap:wrap;gap:.75rem}
@@ -134,13 +220,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   display:inline-block;padding:.7rem 1.25rem;border-radius:4px;font-weight:700;text-decoration:none;
   font-size:1rem;border:2px solid transparent;
 }
-.btn-1{background:var(--ocre);color:#1f1403}
-.btn-1:hover{background:#b0731400;background:#d8973a}
-.btn-2{border-color:#9dc0e4;color:#fff}
-.btn-2:hover{background:rgba(255,255,255,.1)}
+.btn-1{background:var(--ocre);color:var(--sobre-ocre)}
+.btn-1:hover{background:var(--ocre-hover)}
+.btn-2{border-color:var(--banda-apagado);color:var(--banda-texto)}
+.btn-2:hover{background:color-mix(in srgb,var(--banda-texto) 10%,transparent)}
 .parceiros{
-  display:flex;flex-wrap:wrap;gap:.5rem 1.25rem;font-size:.8125rem;color:#9dc0e4;
-  border-top:1px solid rgba(255,255,255,.18);padding-top:1rem;margin-top:.5rem;
+  display:flex;flex-wrap:wrap;gap:.5rem 1.25rem;font-size:.8125rem;color:var(--banda-apagado);
+  border-top:1px solid color-mix(in srgb,var(--banda-texto) 18%,transparent);padding-top:1rem;margin-top:.5rem;
 }
 
 /* bandas */
@@ -150,42 +236,57 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .cabecalho-secao{display:grid;gap:.6rem;max-width:44em;margin-bottom:2rem}
 .cabecalho-secao h2{font-size:clamp(1.5rem,4vw,2.125rem);color:var(--azul)}
 .cabecalho-secao p{color:var(--tinta-suave)}
+.sub{font-size:1.25rem;color:var(--azul);margin:2.5rem 0 1rem}
+.sub:first-child{margin-top:0}
 .prosa{display:grid;gap:1rem;max-width:40em}
 
-.cartoes{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}
+.cartoes{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(15rem,100%),1fr))}
 .cartao{
   background:var(--superficie);border:1px solid var(--linha);border-radius:6px;
   padding:1.25rem;display:grid;gap:.5rem;align-content:start;min-width:0;
 }
-.cartao h3{font-size:1.125rem;color:var(--azul)}
+.cartao h4{font-size:1.125rem;color:var(--azul)}
 .cartao p{color:var(--tinta-suave);font-size:1rem}
 .cartao .num{
   font-family:var(--display);font-size:.8125rem;font-weight:700;letter-spacing:.1em;
-  color:var(--ocre);
+  color:var(--ocre-texto);
 }
 
-.quadro-nao{
+/* quadros de destaque */
+.quadros{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr));margin-top:1.5rem}
+.quadro{
   background:var(--superficie);border:1px solid var(--linha);border-left:5px solid var(--verde);
-  border-radius:6px;padding:1.25rem 1.375rem;display:grid;gap:.75rem;margin-top:1.5rem;max-width:44em;
+  border-radius:6px;padding:1.25rem 1.375rem;display:grid;gap:.75rem;align-content:start;min-width:0;
 }
-.quadro-nao h3{font-size:1.125rem;color:var(--verde)}
-.quadro-nao ul{list-style:none;padding:0;display:grid;gap:.5rem}
-.quadro-nao li{display:flex;gap:.6rem;align-items:baseline;font-size:1rem}
-.quadro-nao li::before{content:"✓";color:var(--verde);font-weight:700;flex:none}
+.quadro h3{font-size:1.125rem;color:var(--verde)}
+.quadro ul{list-style:none;padding:0;display:grid;gap:.5rem}
+.quadro li{display:flex;gap:.6rem;align-items:baseline;font-size:1rem}
+.quadro li::before{content:"✓";color:var(--verde);font-weight:700;flex:none}
+.quadro .nota{font-size:.875rem;color:var(--tinta-suave);border-top:1px solid var(--linha);padding-top:.75rem}
+
+/* números do projeto */
+.numeros{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(12rem,100%),1fr));margin:0;padding:0}
+.numero{
+  background:var(--superficie);border:1px solid var(--linha);border-top:4px solid var(--azul);border-radius:6px;
+  padding:1rem 1.25rem;display:flex;flex-direction:column-reverse;gap:.25rem;min-width:0;
+}
+.numero dt{font-size:.9375rem;color:var(--tinta-suave)}
+.numero dd{margin:0;font-family:var(--display);font-weight:700;font-size:1.75rem;line-height:1.2;color:var(--azul)}
+.numero dd .pend{font-size:1.0625rem;font-weight:500}
 
 /* divisão de responsabilidades */
-.papeis{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr))}
+.papeis{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(17rem,100%),1fr))}
 .papel{background:var(--superficie);border:1px solid var(--linha);border-radius:6px;padding:1.25rem;min-width:0}
-.papel-topo{display:flex;align-items:baseline;gap:.6rem;border-bottom:1px solid var(--linha);padding-bottom:.75rem;margin-bottom:.875rem}
-.papel-topo h3{font-size:1.0625rem}
+.papel-topo{display:flex;flex-wrap:wrap;align-items:baseline;gap:.6rem;border-bottom:1px solid var(--linha);padding-bottom:.75rem;margin-bottom:.875rem}
+.papel-topo h4{font-size:1.0625rem}
 .tag{font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:.2rem .5rem;border-radius:3px}
-.tag-priv{background:rgba(200,133,29,.16);color:var(--ocre)}
-.tag-pub{background:rgba(26,111,100,.16);color:var(--verde)}
+.tag-priv{background:color-mix(in srgb,var(--ocre) 12%,transparent);color:var(--ocre-texto)}
+.tag-pub{background:color-mix(in srgb,var(--verde) 12%,transparent);color:var(--verde-texto)}
 .papel ul{list-style:none;padding:0;display:grid;gap:.6rem;font-size:1rem;color:var(--tinta-suave)}
 .papel li{display:flex;gap:.6rem;align-items:baseline}
 .papel li::before{content:"";width:.4rem;height:.4rem;border-radius:50%;background:var(--linha);flex:none;margin-top:.55em}
 
-/* etapas */
+/* fases */
 .etapas{list-style:none;padding:0;display:grid;gap:0;counter-reset:e}
 .etapa{
   display:grid;grid-template-columns:2.25rem 1fr;gap:0 1rem;padding-bottom:1.5rem;position:relative;
@@ -203,23 +304,48 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   content:"";position:absolute;left:1.125rem;top:2.25rem;bottom:0;width:2px;background:var(--linha);
 }
 .etapa:last-child::after{display:none}
-.etapa h3{font-size:1.0625rem;padding-top:.25rem}
+.etapa h3{font-size:1.0625rem;padding-top:.25rem;display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem .5rem}
 .etapa p{color:var(--tinta-suave);font-size:1rem;grid-column:2}
-.etapa-atual::before{background:var(--azul);border-color:var(--azul);color:#fff}
+.etapa-feita::before{border-color:var(--verde);color:var(--verde)}
+.etapa-feita::after{background:var(--verde)}
+.etapa-atual::before{background:var(--azul);border-color:var(--azul);color:var(--sobre-azul)}
 .etapa-atual h3{color:var(--azul)}
-.etapa-atual .agora{
-  display:inline-block;margin-left:.5rem;vertical-align:.1em;
+.situacao{
+  display:inline-block;font-family:var(--texto);
   font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
-  background:rgba(18,59,102,.14);color:var(--azul);padding:.15rem .45rem;border-radius:3px;
+  padding:.15rem .45rem;border-radius:3px;
+  background:color-mix(in srgb,var(--tinta-suave) 14%,transparent);color:var(--tinta-suave);
 }
+.situacao-feita{background:color-mix(in srgb,var(--verde) 12%,transparent);color:var(--verde-texto)}
+.situacao-atual{background:color-mix(in srgb,var(--azul) 12%,transparent);color:var(--azul-texto)}
+
+/* documentos */
+.docs{display:grid;gap:.625rem;max-width:48em}
+.grupo{background:var(--superficie);border:1px solid var(--linha);border-radius:6px;overflow:hidden}
+.grupo summary{
+  cursor:pointer;list-style:none;padding:1rem 1.125rem;display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline;
+  font-family:var(--display);font-size:1.0625rem;font-weight:700;color:var(--tinta);
+}
+.grupo summary::-webkit-details-marker{display:none}
+.grupo summary::before{content:"+";color:var(--ocre-texto);font-family:var(--texto);font-weight:700;font-size:1.25rem;line-height:1;width:1ch;transition:transform .18s ease}
+.grupo[open] summary::before{transform:rotate(45deg)}
+.grupo summary:hover{color:var(--azul)}
+.grupo .qtd{font-family:var(--texto);font-size:.8125rem;font-weight:600;color:var(--tinta-suave)}
+.grupo ul{list-style:none;padding:0 1.125rem 1rem;display:grid;gap:.5rem}
+.doc a{display:flex;flex-wrap:wrap;gap:.1rem .75rem;align-items:baseline;justify-content:space-between;padding:.6rem .75rem;border:1px solid var(--linha);border-radius:4px;text-decoration:none}
+.doc a:hover{border-color:var(--azul)}
+.doc b{font-weight:600}
+.doc small{color:var(--tinta-suave);font-size:.875rem}
+.vazio{padding:0 1.125rem 1.125rem;color:var(--tinta-suave);font-size:1rem}
+@media (prefers-reduced-motion:reduce){.grupo summary::before{transition:none}}
 
 /* participação */
 .convite{
   background:var(--superficie);border:1px solid var(--linha);border-top:5px solid var(--azul);
   border-radius:6px;padding:1.5rem;display:grid;gap:1rem;max-width:44em;
 }
-.convite h3{font-size:1.25rem;color:var(--azul)}
-.dados{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));margin:0;padding:0}
+.convite h4{font-size:1.25rem;color:var(--azul)}
+.dados{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(min(11rem,100%),1fr));margin:0;padding:0}
 .dados div{display:grid;gap:.15rem;min-width:0}
 .dados dt{font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--tinta-suave)}
 .dados dd{margin:0;font-weight:600}
@@ -227,36 +353,57 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 /* faq */
 .faq{display:grid;gap:.625rem;max-width:48em}
 .item{background:var(--superficie);border:1px solid var(--linha);border-radius:6px;overflow:hidden}
+.item h3{font-family:var(--texto)}
 .item button{
   width:100%;text-align:left;background:none;border:0;cursor:pointer;
   font-family:var(--texto);font-size:1.0625rem;font-weight:600;color:var(--tinta);
   padding:1rem 1.125rem;display:flex;gap:1rem;align-items:baseline;justify-content:space-between;
 }
 .item button:hover{color:var(--azul)}
-.item .mais{flex:none;color:var(--ocre);font-weight:700;font-size:1.25rem;line-height:1;transition:transform .18s ease}
+.item .mais{flex:none;color:var(--ocre-texto);font-weight:700;font-size:1.25rem;line-height:1;transition:transform .18s ease}
 .item button[aria-expanded="true"] .mais{transform:rotate(45deg)}
 .resposta{padding:0 1.125rem 1.125rem;color:var(--tinta-suave);display:grid;gap:.75rem}
 @media (prefers-reduced-motion:reduce){.item .mais{transition:none}}
 
-/* rodapé */
-.rodape{background:var(--azul-escuro);color:#c3d5e8;font-size:.9375rem}
-.rodape .banda-inner{padding-block:2.5rem}
-.rodape-grid{display:grid;gap:1.75rem;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))}
-.rodape h3{font-family:var(--texto);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#8fb0d2;margin-bottom:.6rem}
-.rodape a{color:#fff}
-.rodape ul{list-style:none;padding:0;display:grid;gap:.4rem}
-.rodape .fim{border-top:1px solid rgba(255,255,255,.16);margin-top:1.75rem;padding-top:1.25rem;font-size:.8125rem;color:#8fb0d2}
+/* contato */
+.contatos{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(15rem,100%),1fr))}
+.contato{background:var(--superficie);border:1px solid var(--linha);border-radius:6px;padding:1.25rem;display:grid;gap:.4rem;align-content:start;min-width:0}
+.contato h3{font-size:1.0625rem;color:var(--azul)}
+.contato p{color:var(--tinta-suave);font-size:1rem}
 
+/* rodapé */
+.rodape{background:var(--azul-escuro);color:var(--banda-suave);font-size:.9375rem}
+.rodape .banda-inner{padding-block:2.5rem}
+.rodape-grid{display:grid;gap:1.75rem;grid-template-columns:repeat(auto-fit,minmax(min(14rem,100%),1fr))}
+.rodape h2{font-family:var(--texto);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--banda-apagado);margin-bottom:.6rem}
+.rodape a{color:var(--banda-texto)}
+.rodape ul{list-style:none;padding:0;display:grid;gap:.4rem}
+.rodape .fim{border-top:1px solid color-mix(in srgb,var(--banda-texto) 16%,transparent);margin-top:1.75rem;padding-top:1.25rem;font-size:.8125rem;color:var(--banda-apagado)}
+
+/* dado a confirmar: destacado de propósito até a SME validar */
 .pend{
   font-family:var(--display);font-style:italic;
-  background:rgba(200,133,29,.18);border-bottom:1px dashed var(--ocre);
+  background:color-mix(in srgb,var(--ocre) 18%,transparent);border-bottom:1px dashed var(--ocre);
   padding:0 .2em;
+  overflow-wrap:anywhere;  /* {{NOME_LONGO}} não tem espaço: sem isto estoura a 360px */
 }
 </style>
 </head>
 <body>
 
 <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+
+<div class="acess">
+  <div class="acess-inner">
+    <div class="acess-ctl" role="group" aria-label="Acessibilidade">
+      <span class="acess-rot" aria-hidden="true">Acessibilidade</span>
+      <button type="button" id="fonte-menos" aria-label="Diminuir o tamanho do texto">A−</button>
+      <button type="button" id="fonte-mais" aria-label="Aumentar o tamanho do texto">A+</button>
+      <button type="button" id="contraste" aria-pressed="false">Alto contraste</button>
+    </div>
+    <span>Prefeitura de Ribeirão Preto</span>
+  </div>
+</div>
 
 <div class="faixa">
   <div class="faixa-inner">
@@ -267,29 +414,30 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 <header class="topo">
   <div class="topo-inner">
-    <a class="marca" href="#">
+    <a class="marca" href="#conteudo">
       <b>PPP de Educação Infantil</b>
       <small>Ribeirão Preto</small>
     </a>
     <nav aria-label="Seções desta página">
       <ul class="menu">
         <li><a href="#o-que-e">O que é</a></li>
-        <li><a href="#objetivos">Objetivos</a></li>
-        <li><a href="#como-funciona">Como funciona</a></li>
-        <li><a href="#etapas">Etapas</a></li>
+        <li><a href="#projeto">Projeto</a></li>
+        <li><a href="#etapas">Fases</a></li>
+        <li><a href="#documentos">Documentos</a></li>
         <li><a href="#participacao">Participação</a></li>
         <li><a href="#duvidas">Dúvidas</a></li>
+        <li><a href="#contato">Contato</a></li>
       </ul>
     </nav>
   </div>
 </header>
 
-<main id="conteudo">
+<main id="conteudo" tabindex="-1">
 
-  <section class="hero">
+  <section class="hero" aria-labelledby="titulo">
     <div class="banda-inner">
       <p class="eyebrow">Prefeitura de Ribeirão Preto · Secretaria Municipal de Educação</p>
-      <h1>Novas unidades de educação infantil para a rede municipal</h1>
+      <h1 id="titulo">Novas unidades de educação infantil para a rede municipal</h1>
       <p class="lead">Uma Parceria Público-Privada (PPP) para estruturar, construir e manter novas unidades de educação infantil em Ribeirão Preto, ampliando a oferta de vagas e fortalecendo a infraestrutura das escolas.</p>
       <span class="selo"><span class="ponto"></span>Fase atual: <span class="pend">{{ETAPA_ATUAL}}</span></span>
       <div class="acoes">
@@ -304,10 +452,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     </div>
   </section>
 
-  <section class="banda" id="o-que-e">
+  <section class="banda" id="o-que-e" aria-labelledby="t-o-que-e">
     <div class="banda-inner">
       <div class="cabecalho-secao">
-        <h2>O que é esta parceria</h2>
+        <h2 id="t-o-que-e">O que é esta parceria</h2>
         <p>Em linguagem simples, para quem tem criança na rede municipal.</p>
       </div>
       <div class="prosa">
@@ -315,60 +463,75 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <p>O Município continua responsável pela educação: pela matrícula, pelo projeto pedagógico e pelo trabalho com as crianças. O modelo está sendo estruturado pela Secretaria Municipal de Educação com apoio técnico da Caixa Econômica Federal.</p>
         <p>A quantidade de unidades, a localização e os prazos fazem parte da modelagem em andamento e serão divulgados aqui quando estiverem definidos: <span class="pend">{{UNIDADES_E_LOCALIZACAO}}</span></p>
       </div>
-      <div class="quadro-nao">
-        <h3>O que não muda</h3>
-        <ul>
-          <li>A matrícula continua pública, gratuita e feita pela Secretaria Municipal de Educação.</li>
-          <li>O projeto pedagógico continua sendo do Município.</li>
-          <li>As unidades continuam integrando a rede municipal de ensino.</li>
-          <li><span class="pend">{{VINCULO_DOS_PROFISSIONAIS}}</span></li>
-        </ul>
+      <div class="quadros">
+        <div class="quadro">
+          <h3>PPP não é privatização</h3>
+          <ul>
+            <li>É um contrato com prazo definido, não a venda das escolas.</li>
+            <li>As unidades continuam fazendo parte da rede municipal de ensino.</li>
+            <li>O Município fiscaliza o contrato e a prestação dos serviços.</li>
+            <li><span class="pend">{{DESTINO_DOS_BENS_AO_FIM_DO_CONTRATO}}</span></li>
+          </ul>
+          <p class="nota">Base legal: Lei Federal nº 11.079/2004, que institui as normas gerais das parcerias público-privadas.</p>
+        </div>
+        <div class="quadro">
+          <h3>O que não muda</h3>
+          <ul>
+            <li>A matrícula continua pública, gratuita e feita pela Secretaria Municipal de Educação.</li>
+            <li>O projeto pedagógico continua sendo do Município.</li>
+            <li>As unidades continuam integrando a rede municipal de ensino.</li>
+            <li><span class="pend">{{VINCULO_DOS_PROFISSIONAIS}}</span></li>
+          </ul>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="banda banda-alt" id="objetivos">
+  <section class="banda banda-alt" id="projeto" aria-labelledby="t-projeto">
     <div class="banda-inner">
       <div class="cabecalho-secao">
-        <h2>Para que serve o projeto</h2>
-        <p>Os objetivos que orientam a estruturação da parceria.</p>
+        <h2 id="t-projeto">O projeto</h2>
+        <p>Os objetivos, os números e a divisão de responsabilidades da parceria.</p>
       </div>
+
+      <h3 class="sub">Objetivos</h3>
       <div class="cartoes">
         <article class="cartao">
           <p class="num">01</p>
-          <h3>Mais vagas na educação infantil</h3>
+          <h4>Mais vagas na educação infantil</h4>
           <p>Ampliar a oferta de vagas para crianças de 0 a 5 anos na rede municipal.</p>
         </article>
         <article class="cartao">
           <p class="num">02</p>
-          <h3>Novas unidades</h3>
+          <h4>Novas unidades</h4>
           <p>Construir unidades de educação infantil planejadas para o atendimento da primeira infância.</p>
         </article>
         <article class="cartao">
           <p class="num">03</p>
-          <h3>Infraestrutura fortalecida</h3>
+          <h4>Infraestrutura fortalecida</h4>
           <p>Fortalecer a infraestrutura escolar do município, com manutenção prevista ao longo do contrato.</p>
         </article>
         <article class="cartao">
           <p class="num">04</p>
-          <h3>Metas do projeto</h3>
+          <h4>Metas do projeto</h4>
           <p><span class="pend">{{METAS_E_INDICADORES}}</span></p>
         </article>
       </div>
-    </div>
-  </section>
 
-  <section class="banda" id="como-funciona">
-    <div class="banda-inner">
-      <div class="cabecalho-secao">
-        <h2>Quem faz o quê</h2>
-        <p>A divisão de responsabilidades prevista no modelo em estruturação.</p>
-      </div>
+      <h3 class="sub">Em números</h3>
+      <dl class="numeros">
+        <div class="numero"><dt>Unidades de educação infantil</dt><dd><span class="pend">{{QTD_UNIDADES}}</span></dd></div>
+        <div class="numero"><dt>Novas vagas</dt><dd><span class="pend">{{QTD_VAGAS}}</span></dd></div>
+        <div class="numero"><dt>Prazo do contrato</dt><dd><span class="pend">{{PRAZO_DO_CONTRATO}}</span></dd></div>
+        <div class="numero"><dt>Vagas públicas e gratuitas</dt><dd>100%</dd></div>
+      </dl>
+
+      <h3 class="sub" id="como-funciona">Quem faz o quê</h3>
       <div class="papeis">
         <article class="papel">
           <div class="papel-topo">
             <span class="tag tag-priv">Parceiro privado</span>
-            <h3>Infraestrutura</h3>
+            <h4>Infraestrutura</h4>
           </div>
           <ul>
             <li>Elaborar os projetos e construir as unidades</li>
@@ -380,7 +543,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <article class="papel">
           <div class="papel-topo">
             <span class="tag tag-pub">Município · SME</span>
-            <h3>Educação</h3>
+            <h4>Educação</h4>
           </div>
           <ul>
             <li>Definir onde as unidades são necessárias</li>
@@ -390,56 +553,94 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
           </ul>
         </article>
       </div>
+
+      <h3 class="sub">Quem estrutura o projeto</h3>
+      <div class="prosa">
+        <p>O projeto é estruturado pela Secretaria Municipal de Educação, em cooperação técnica com a Caixa Econômica Federal.</p>
+        <p><span class="pend">{{PROGRAMA_E_INSTITUICOES_DE_APOIO}}</span></p>
+      </div>
     </div>
   </section>
 
-  <section class="banda banda-alt" id="etapas">
+  <section class="banda" id="etapas" aria-labelledby="t-etapas">
     <div class="banda-inner">
       <div class="cabecalho-secao">
-        <h2>Etapas do projeto</h2>
-        <p>O caminho entre o estudo inicial e o funcionamento das unidades. As datas de cada etapa serão publicadas conforme forem definidas.</p>
+        <h2 id="t-etapas">Fases do projeto</h2>
+        <p>O caminho entre o estudo inicial e o funcionamento das unidades. As datas de cada fase serão publicadas conforme forem definidas.</p>
       </div>
       <ol class="etapas">
-        <li class="etapa">
-          <h3>Modelagem e estudos</h3>
+        <li class="etapa etapa-feita">
+          <h3>Modelagem e estudos <span class="situacao situacao-feita">Concluída</span></h3>
           <p>Estudos técnicos, jurídicos e econômico-financeiros do projeto, com apoio da Caixa Econômica Federal.</p>
         </li>
         <li class="etapa etapa-atual">
-          <h3>Escuta e consulta pública <span class="agora">Etapa atual</span></h3>
+          <h3>Escuta e consulta pública <span class="situacao situacao-atual">Em andamento</span></h3>
           <p>Participação da comunidade escolar e da população na discussão do projeto, antes da licitação.</p>
         </li>
         <li class="etapa">
-          <h3>Licitação</h3>
+          <h3>Licitação <span class="situacao">A iniciar</span></h3>
           <p>Publicação do edital e seleção da empresa ou consórcio que executará o contrato.</p>
         </li>
         <li class="etapa">
-          <h3>Assinatura do contrato</h3>
+          <h3>Assinatura do contrato <span class="situacao">A iniciar</span></h3>
           <p>Formalização da parceria e definição dos marcos de execução.</p>
         </li>
         <li class="etapa">
-          <h3>Projetos e licenças</h3>
+          <h3>Projetos e licenças <span class="situacao">A iniciar</span></h3>
           <p>Projetos executivos das unidades e obtenção das autorizações necessárias.</p>
         </li>
         <li class="etapa">
-          <h3>Obras</h3>
+          <h3>Obras <span class="situacao">A iniciar</span></h3>
           <p>Construção das novas unidades de educação infantil.</p>
         </li>
         <li class="etapa">
-          <h3>Funcionamento e manutenção</h3>
+          <h3>Funcionamento e manutenção <span class="situacao">A iniciar</span></h3>
           <p>Abertura das vagas, atendimento às crianças e manutenção da infraestrutura durante o contrato.</p>
         </li>
       </ol>
     </div>
   </section>
 
-  <section class="banda" id="participacao">
+  <section class="banda banda-alt" id="documentos" aria-labelledby="t-documentos">
     <div class="banda-inner">
       <div class="cabecalho-secao">
-        <h2>Participação da comunidade</h2>
+        <h2 id="t-documentos">Documentos do projeto</h2>
+        <p>Os documentos oficiais do projeto serão publicados aqui para consulta de qualquer pessoa, à medida que forem divulgados.</p>
+      </div>
+      <div class="docs">
+        <!-- Para publicar um documento: pôr o PDF em documentos/, trocar o parágrafo .vazio
+             do grupo por uma lista e acrescentar um item por arquivo, atualizando a .qtd.
+             No href, trocar (aspas) por aspas — aqui elas não vão para a conferência do
+             deploy não tomar o exemplo por um link quebrado:
+             <ul>
+               <li class="doc"><a href=(aspas)documentos/nome-do-arquivo.pdf(aspas)>
+                 <b>Nome do documento</b><small>dd/mm/aaaa · PDF, 1,2 MB</small></a></li>
+             </ul> -->
+        <details class="grupo">
+          <summary>Edital e contrato <span class="qtd">nenhum documento ainda</span></summary>
+          <p class="vazio">A minuta do edital, a minuta do contrato e os anexos serão publicados aqui.</p>
+        </details>
+        <details class="grupo">
+          <summary>Estudos técnicos <span class="qtd">nenhum documento ainda</span></summary>
+          <p class="vazio">Os estudos que embasam o projeto serão publicados aqui.</p>
+        </details>
+        <details class="grupo">
+          <summary>Consulta e audiência pública <span class="qtd">nenhum documento ainda</span></summary>
+          <p class="vazio">Avisos, regulamentos e respostas às contribuições serão publicados aqui.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="banda" id="participacao" aria-labelledby="t-participacao">
+    <div class="banda-inner">
+      <div class="cabecalho-secao">
+        <h2 id="t-participacao">Participação da comunidade</h2>
         <p>O projeto prevê etapas de escuta e de consulta pública. A participação de famílias, professores e gestores é parte da construção do modelo.</p>
       </div>
       <div class="convite">
-        <h3><span class="pend">{{NOME_DO_EVENTO}}</span></h3>
+        <h3 class="sub">Próximo encontro</h3>
+        <h4><span class="pend">{{NOME_DO_EVENTO}}</span></h4>
         <p>Encontro aberto à comunidade escolar para apresentação do projeto e registro de contribuições.</p>
         <dl class="dados">
           <div><dt>Data</dt><dd><span class="pend">{{DATA}}</span></dd></div>
@@ -449,13 +650,19 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         </dl>
         <p>As vagas são limitadas e a inscrição é feita por formulário: <span class="pend">{{LINK_DO_FORMULARIO}}</span></p>
       </div>
+
+      <h3 class="sub">Escuta da comunidade</h3>
+      <div class="prosa">
+        <p>A escuta reúne as percepções, as necessidades e as sugestões de famílias, profissionais da educação e moradores sobre o projeto. Depois de cada etapa de participação, a Secretaria publica aqui o que foi recebido e como as contribuições foram consideradas.</p>
+        <p>Relatório da escuta: <span class="pend">{{RELATORIO_DA_ESCUTA}}</span></p>
+      </div>
     </div>
   </section>
 
-  <section class="banda banda-alt" id="duvidas">
+  <section class="banda banda-alt" id="duvidas" aria-labelledby="t-duvidas">
     <div class="banda-inner">
       <div class="cabecalho-secao">
-        <h2>Dúvidas frequentes</h2>
+        <h2 id="t-duvidas">Dúvidas frequentes</h2>
         <p>As perguntas que mais chegam à Secretaria sobre o projeto.</p>
       </div>
       <div class="faq">
@@ -512,10 +719,61 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div class="item">
           <h3><button type="button" aria-expanded="false" aria-controls="r8" id="b8">Onde acompanho os documentos do projeto?<span class="mais" aria-hidden="true">+</span></button></h3>
           <div class="resposta" id="r8" role="region" aria-labelledby="b8" hidden>
-            <p><span class="pend">{{LINK_TRANSPARENCIA_E_DOCUMENTOS}}</span></p>
+            <p>Na seção <a href="#documentos">Documentos do projeto</a>, nesta página, à medida que forem publicados. <span class="pend">{{LINK_TRANSPARENCIA_E_DOCUMENTOS}}</span></p>
           </div>
         </div>
 
+        <div class="item">
+          <h3><button type="button" aria-expanded="false" aria-controls="r9" id="b9">Em que fase o projeto está?<span class="mais" aria-hidden="true">+</span></button></h3>
+          <div class="resposta" id="r9" role="region" aria-labelledby="b9" hidden>
+            <p>A fase atual e as próximas estão na seção <a href="#etapas">Fases do projeto</a>, atualizada a cada avanço.</p>
+          </div>
+        </div>
+
+        <div class="item">
+          <h3><button type="button" aria-expanded="false" aria-controls="r10" id="b10">Como a qualidade dos serviços será garantida?<span class="mais" aria-hidden="true">+</span></button></h3>
+          <div class="resposta" id="r10" role="region" aria-labelledby="b10" hidden>
+            <p><span class="pend">{{RESPOSTA_QUALIDADE_E_FISCALIZACAO}}</span></p>
+          </div>
+        </div>
+
+        <div class="item">
+          <h3><button type="button" aria-expanded="false" aria-controls="r11" id="b11">O que acontece com os prédios ao final do contrato?<span class="mais" aria-hidden="true">+</span></button></h3>
+          <div class="resposta" id="r11" role="region" aria-labelledby="b11" hidden>
+            <p><span class="pend">{{DESTINO_DOS_BENS_AO_FIM_DO_CONTRATO}}</span></p>
+          </div>
+        </div>
+
+        <div class="item">
+          <h3><button type="button" aria-expanded="false" aria-controls="r12" id="b12">Quem está estruturando o projeto?<span class="mais" aria-hidden="true">+</span></button></h3>
+          <div class="resposta" id="r12" role="region" aria-labelledby="b12" hidden>
+            <p>A Secretaria Municipal de Educação, em cooperação técnica com a Caixa Econômica Federal. <span class="pend">{{PROGRAMA_E_INSTITUICOES_DE_APOIO}}</span></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="banda" id="contato" aria-labelledby="t-contato">
+    <div class="banda-inner">
+      <div class="cabecalho-secao">
+        <h2 id="t-contato">Contato</h2>
+        <p>Para dúvidas, sugestões e pedidos de informação sobre o projeto.</p>
+      </div>
+      <div class="contatos">
+        <div class="contato">
+          <h3>Equipe do projeto</h3>
+          <p><span class="pend">{{CANAL_DE_CONTATO}}</span></p>
+        </div>
+        <div class="contato">
+          <h3>Ouvidoria</h3>
+          <p><span class="pend">{{LINK_OUVIDORIA}}</span></p>
+        </div>
+        <div class="contato">
+          <h3>Acesso à informação</h3>
+          <p><span class="pend">{{LINK_ACESSO_A_INFORMACAO}}</span></p>
+        </div>
       </div>
     </div>
   </section>
@@ -526,31 +784,37 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   <div class="banda-inner">
     <div class="rodape-grid">
       <div>
-        <h3>Realização</h3>
+        <h2>Realização</h2>
         <ul>
           <li>Prefeitura Municipal de Ribeirão Preto</li>
           <li>Secretaria Municipal de Educação</li>
         </ul>
       </div>
       <div>
-        <h3>Cooperação técnica</h3>
+        <h2>Cooperação técnica</h2>
         <ul><li>Caixa Econômica Federal</li></ul>
       </div>
       <div>
-        <h3>Contato</h3>
-        <ul><li><span class="pend">{{CANAL_DE_CONTATO}}</span></li></ul>
+        <h2>Nesta página</h2>
+        <ul>
+          <li><a href="#projeto">O projeto</a></li>
+          <li><a href="#documentos">Documentos</a></li>
+          <li><a href="#duvidas">Dúvidas frequentes</a></li>
+          <li><a href="#contato">Contato</a></li>
+        </ul>
       </div>
       <div>
-        <h3>Transparência</h3>
+        <h2>Transparência</h2>
         <ul><li><span class="pend">{{LINK_PORTAL_TRANSPARENCIA}}</span></li></ul>
       </div>
     </div>
-    <p class="fim">Página provisória de divulgação. Conteúdo sujeito a alteração conforme o andamento do projeto.</p>
+    <p class="fim">Página provisória de divulgação. Conteúdo sujeito a alteração conforme o andamento do projeto. Esta página não usa cookies nem coleta dados de quem a visita.</p>
   </div>
 </footer>
 
 <script>
 (function () {
+  /* acordeão das dúvidas */
   var botoes = document.querySelectorAll('.item button');
   for (var i = 0; i < botoes.length; i++) {
     botoes[i].addEventListener('click', function () {
@@ -560,6 +824,38 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       if (alvo) { alvo.hidden = aberto; }
     });
   }
+
+  /* barra de acessibilidade: tamanho do texto e alto contraste.
+     A escolha fica só neste navegador (localStorage), sem cookie. */
+  var raiz = document.documentElement;
+  var TAMANHOS = [100, 112.5, 125, 137.5];
+  var menos = document.getElementById('fonte-menos');
+  var mais = document.getElementById('fonte-mais');
+  var contraste = document.getElementById('contraste');
+  var nivel = 0;
+  try { nivel = parseInt(localStorage.getItem('ppp_fonte'), 10) || 0; } catch (e) {}
+  if (nivel < 0 || nivel >= TAMANHOS.length) { nivel = 0; }
+
+  function guardar(chave, valor) { try { localStorage.setItem(chave, valor); } catch (e) {} }
+  function aplicarFonte() {
+    raiz.style.fontSize = nivel ? TAMANHOS[nivel] + '%' : '';
+    menos.disabled = nivel === 0;
+    mais.disabled = nivel === TAMANHOS.length - 1;
+    guardar('ppp_fonte', String(nivel));
+  }
+  menos.addEventListener('click', function () { if (nivel > 0) { nivel--; aplicarFonte(); } });
+  mais.addEventListener('click', function () { if (nivel < TAMANHOS.length - 1) { nivel++; aplicarFonte(); } });
+  aplicarFonte();
+
+  function aplicarContraste(ligado) {
+    if (ligado) { raiz.setAttribute('data-contraste', 'alto'); } else { raiz.removeAttribute('data-contraste'); }
+    contraste.setAttribute('aria-pressed', ligado ? 'true' : 'false');
+    guardar('ppp_contraste', ligado ? '1' : '0');
+  }
+  contraste.addEventListener('click', function () {
+    aplicarContraste(raiz.getAttribute('data-contraste') !== 'alto');
+  });
+  aplicarContraste(raiz.getAttribute('data-contraste') === 'alto');
 })();
 </script>
 </body>

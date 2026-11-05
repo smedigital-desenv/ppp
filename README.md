@@ -6,10 +6,13 @@ Site estático de divulgação à comunidade. Versão provisória, para subpasta
 ## Arquivos
 
 ```
-hotsite-ppp/
+ppp/
 ├── index.html      site completo (HTML, CSS e JS em arquivo único)
+├── documentos/     PDFs oficiais publicados na seção Documentos (criar quando houver)
 ├── PENDENCIAS.md   placeholders e afirmações a validar
-└── README.md       este arquivo
+├── README.md       este arquivo
+├── CLAUDE.md       regras do projeto para o Claude Code
+└── .github/        publicação (workflow e montagem do site)
 ```
 
 Arquivo único por opção: é uma página só, provisória, e evita qualquer problema de
@@ -28,10 +31,10 @@ O workflow `.github/workflows/deploy-pages.yml` roda a cada push nas duas branch
 
 A montagem é por **inclusão** (`.github/montar-site.sh`): só vai ao ar página e o que
 a página carrega (HTML, CSS, JS, imagens, fontes, PDF). `README.md`, `PENDENCIAS.md`,
-`CLAUDE.md` e os scripts não são publicados. Imagem nova em `assets/img/` precisa
-que a pasta `assets` entre em `DIRS_RUNTIME`, no próprio `montar-site.sh` — a
-conferência (`conferir-referencias.py`) para o deploy se a página pedir um arquivo
-que ficou de fora.
+`CLAUDE.md` e os scripts não são publicados. A pasta `documentos/` já está em
+`DIRS_RUNTIME`; imagem nova em `assets/img/` precisa que `assets` entre ali também,
+no próprio `montar-site.sh` — a conferência (`conferir-referencias.py`) para o
+deploy se a página pedir um arquivo que ficou de fora.
 
 Fluxo: alterar na `develop`, conferir em `/ppp/teste/`, e só então levar para a `main`.
 
@@ -54,12 +57,18 @@ Remover quando o conteúdo for validado e o site for divulgado oficialmente.
   comentário ou um `id` que corresponde ao item do menu.
 - **Dados pendentes**: procurar por `{{` e substituir. Ver `PENDENCIAS.md`.
 - **Cores**: variáveis CSS no bloco `:root`, no topo do `<style>`.
-- **Etapa atual na linha do tempo**: a classe `etapa-atual` no `<li>` correspondente
-  marca o círculo em azul e exibe o selo "Etapa atual". Mover a classe conforme o
-  projeto avança, e atualizar `{{ETAPA_ATUAL}}` no selo do topo.
+- **Fases**: cada `<li class="etapa">` tem uma situação. Concluída: classe
+  `etapa-feita` e selo `<span class="situacao situacao-feita">Concluída</span>`. Em
+  andamento: `etapa-atual` e `situacao-atual`. A iniciar: só `etapa` e
+  `<span class="situacao">A iniciar</span>`. Ao avançar, mover as classes e os selos e
+  atualizar `{{ETAPA_ATUAL}}` no topo com o mesmo nome.
+- **Documentos**: pôr o PDF em `documentos/` e, no grupo certo da seção Documentos,
+  trocar o parágrafo `.vazio` por uma lista com um item por arquivo (o modelo está num
+  comentário no próprio `index.html`) e atualizar o texto `.qtd` ("2 documentos").
+  Só documento já publicado oficialmente.
 - **Perguntas da FAQ**: cada bloco `.item` é independente. Ao duplicar um bloco,
-  trocar os `id` (`b9` / `r9`) e os `aria-controls` / `aria-labelledby`
-  correspondentes, senão a acessibilidade quebra.
+  trocar os `id` (hoje vão até `b12` / `r12`) e os `aria-controls` /
+  `aria-labelledby` correspondentes, senão a acessibilidade quebra.
 
 ## Características técnicas
 
@@ -67,10 +76,15 @@ Remover quando o conteúdo for validado e o site for divulgado oficialmente.
   além das fontes do Google Fonts (Bitter e Source Sans 3), com fallback de sistema.
 - Mobile-first. Testado a partir de 360px de largura, sem rolagem horizontal.
 - Tema claro e escuro, seguindo a preferência do sistema do visitante.
+- Barra de acessibilidade: tamanho do texto (A− / A+, de 100% a 137,5%) e alto
+  contraste. A escolha fica guardada só no navegador da pessoa (`localStorage`),
+  sem cookie.
 - Acessibilidade: HTML semântico, hierarquia de headings, skip link, navegação por
-  teclado, acordeão com `aria-expanded`, foco visível, respeito a
-  `prefers-reduced-motion`.
+  teclado, acordeão com `aria-expanded`, foco visível, contraste AA nos temas claro,
+  escuro e alto contraste, respeito a `prefers-reduced-motion`.
+- No celular o menu fica numa linha e rola para o lado dentro dele, para o cabeçalho
+  fixo não ocupar meia tela.
 - Meta tags Open Graph para o preview do link em WhatsApp (falta a imagem — ver
   `PENDENCIAS.md`).
-- Nenhum formulário nem coleta de dados pessoais na página. A inscrição em eventos
-  aponta para formulário externo.
+- Nenhum formulário nem coleta de dados pessoais na página, e nenhum cookie — por
+  isso não há aviso de cookies. A inscrição em eventos aponta para formulário externo.

@@ -52,9 +52,16 @@ site é corrigido.
 
 - **Cores**: em variáveis CSS no `:root`, com bloco equivalente para tema
   escuro em `@media (prefers-color-scheme: dark)` e em
-  `:root[data-theme="dark"]`. Nenhuma cor literal em regra de componente.
-  ⚠️ A primeira versão ainda tem literais (os brancos e azuis claros do
-  cabeçalho, do hero e do rodapé, e o hover do botão) — dívida conhecida.
+  `:root[data-theme="dark"]`, e um terceiro para o alto contraste
+  (`:root[data-contraste="alto"]`, ligado pela barra de acessibilidade).
+  Nenhuma cor literal em regra de componente. Texto pequeno colorido usa as
+  variantes `--azul-texto`, `--verde-texto` e `--ocre-texto`: a cor cheia não
+  passa 4.5:1 sobre fundo tingido.
+- **`[hidden]{display:none !important}` fica.** Sem ele, uma regra com
+  `display` (como `.resposta{display:grid}`) anula o `hidden` e as respostas
+  do FAQ ficam sempre abertas — foi o que aconteceu na primeira versão.
+- **Placeholder longo precisa quebrar** (`.pend{overflow-wrap:anywhere}`):
+  `{{NOME_SEM_ESPACO}}` estourava a largura a 360px.
 - **Tipografia**: Bitter (títulos) e Source Sans 3 (texto), via Google Fonts,
   com fallback de sistema. Corpo de texto em 17px.
 - **Mobile-first**: sem rolagem horizontal a partir de 360px. Gutter lateral de
@@ -90,5 +97,8 @@ histórico do Git é permanente. Nunca versione:
 1. Liste cada afirmação factual nova que entrou no site e aponte de onde ela
    veio. Afirmação sem origem em documento fornecido vira placeholder.
 2. Atualize `PENDENCIAS.md` e `README.md` se a alteração mudar algo neles.
-3. Confirme que o site continua sem rolagem horizontal a 360px, sem erro no
-   console e com contraste AA nos temas claro e escuro.
+3. Confirme que o site continua sem rolagem horizontal a 360px (também com o
+   texto em 137,5%), sem erro no console e com contraste AA nos temas claro,
+   escuro e alto contraste. Confira o comportamento pelo que APARECE na tela
+   (`offsetHeight`), não pelo atributo — foi assim que o FAQ sempre aberto
+   passou despercebido.
